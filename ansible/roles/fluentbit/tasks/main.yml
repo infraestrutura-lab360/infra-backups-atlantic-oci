@@ -1,0 +1,31 @@
+---
+- name: Adicionar a chave GPG do Fluent Bit
+  ansible.builtin.apt_key:
+    url: https://packages.fluentbit.io/fluentbit.key
+    state: present
+
+- name: Adicionar o repositório do Fluent Bit
+  ansible.builtin.apt_repository:
+    repo: "deb https://packages.fluentbit.io/ubuntu/focal focal main" # Ajuste a versão do SO se necessário (focal, jammy, etc.)
+    state: present
+
+- name: Instalar o Fluent Bit
+  ansible.builtin.apt:
+    name: fluent-bit
+    state: present
+    update_cache: yes
+
+- name: Implantar configuracao do Fluent Bit (Template)
+  ansible.builtin.template:
+    src: fluent-bit.conf.j2
+    dest: /etc/fluent-bit/fluent-bit.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fluent-bit
+
+- name: Garantir que o servico do Fluent Bit esta rodando e habilitado
+  ansible.builtin.systemd:
+    name: fluent-bit
+    state: started
+    enabled: yes

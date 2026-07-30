@@ -1,0 +1,50 @@
+[SERVICE]
+    Flush        60
+    Daemon       Off
+    Log_Level    info
+    Parsers_File parsers.conf
+
+# === COLETA DE LOGS (INPUTS) ===
+
+# Exemplo 1: Logs de Aplicação (Rails)
+[INPUT]
+    Name         tail
+    Path         /caminho/para/aplicacao/logs/*.log
+    Tag          aplicacoes.*
+    Read_from_Head True
+
+# Exemplo 2: Logs do Sistema (Syslog)
+[INPUT]
+    Name         tail
+    Path         /var/log/syslog
+    Tag          servidores.so.*
+
+# === ENVIO PARA OCI OBJECT STORAGE (OUTPUTS) ===
+
+# Envio dos logs da Aplicação
+[OUTPUT]
+    Name                         s3
+    Match                        aplicacoes.*
+    Bucket                       backups
+    Region                       sa-saopaulo-1
+    Endpoint                     https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+    aws_access_key_id            {{ s3_access_key }}
+    aws_secret_access_key        {{ s3_secret_key }}
+    # Formato do caminho no bucket conforme o seu diagrama
+    S3_Key_Format                /aplicacoes/{{ ansible_hostname }}/logs/%Y/%m/$UUID.log.gz
+    Compression                  gzip
+    Store_Dir                    /var/log/fluentbit-buffer/app
+
+# Envio dos logs do SO
+[OUTPUT]
+    Name                         s3
+    Match                        servidores.so.*
+    Bucket                       backups
+    Region                       sa-saopaulo-1
+    Endpoint                     https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+    aws_access_key_id            {{ s3_access_key }}
+    aws_secret_access_key        {{ s3_secret_key }}
+    # Formato do caminho no bucket para servidores/so
+    S3_Key_Format                /servidores/{{ ansible_hostname }}/so/logs/%Y/%m/$UUID.log.gz
+    Compression                  gzip
+    Store_Dir                    /var/log/fluentbit-buffer/so
