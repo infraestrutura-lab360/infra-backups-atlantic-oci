@@ -35,6 +35,17 @@
     mode: '0644'
   notify: Restart fluent-bit
 
+- name: Configurar credenciais OCI S3 como variaveis de ambiente
+  ansible.builtin.copy:
+    content: |
+      AWS_ACCESS_KEY_ID={{ s3_access_key }}
+      AWS_SECRET_ACCESS_KEY={{ s3_secret_key }}
+    dest: /etc/default/fluent-bit
+    owner: root
+    group: root
+    mode: '0600' # Protege o arquivo para que apenas o root consiga ver as chaves
+  notify: Restart fluent-bit
+
 - name: Garantir que o servico do Fluent Bit esta rodando e habilitado
   ansible.builtin.systemd:
     name: fluent-bit
