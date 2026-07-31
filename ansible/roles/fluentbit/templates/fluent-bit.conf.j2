@@ -30,7 +30,7 @@
     Endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     
     # Estrutura: /aplicacoes/nome_do_servidor/fonte/ANO/MES/DIA/nome_do_arquivo_HORAMINUTOSEGUNDO.log.gz
-    S3_Key_Format    /aplicacoes/{{ nome_curto_servidor }}/fonte/%Y/%m/%d/rails_server_doterrahmg_%H%M%S.log.gz
+    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/fonte/%Y/%m/%d/rails_server_doterrahmg_%H%M%S.log.gz
     Compression      gzip
     Store_Dir        /var/log/fluentbit-buffer/app
 
