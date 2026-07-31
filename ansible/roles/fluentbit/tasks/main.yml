@@ -15,6 +15,17 @@
     state: present
     update_cache: yes
 
+- name: Criar diretorios de buffer para o Fluent Bit
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /var/log/fluentbit-buffer/app
+    - /var/log/fluentbit-buffer/so
+
 - name: Implantar configuracao do Fluent Bit (Template)
   ansible.builtin.template:
     src: fluent-bit.conf.j2

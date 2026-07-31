@@ -1,6 +1,6 @@
 ---
 - name: Implantacao e Configuracao do Fluent Bit
-  hosts: all # Ou o grupo de hosts do seu inventario
+  hosts: all
   become: yes
   roles:
-    - fluentbit
+    - role: ../roles/fluentbit
