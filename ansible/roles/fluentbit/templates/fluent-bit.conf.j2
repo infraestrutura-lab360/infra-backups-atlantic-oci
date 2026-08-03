@@ -29,8 +29,8 @@
     Region           sa-saopaulo-1
     Endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     
-    # CORRIGIDO: Adicionado _%H%M%S no final do nome do arquivo para evitar sobrescrita a cada hora
-    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmg_%H%M%S.log.gz
+    # Ajustado para usar a data completa e o UUID antes da extensão .gz
+    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
     Compression      gzip
     
     Store_Dir        /var/log/fluentbit-buffer/app
