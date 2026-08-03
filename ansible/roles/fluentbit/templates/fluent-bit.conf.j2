@@ -13,11 +13,11 @@
     Tag          aplicacoes.*
     Read_from_Head True
 
-# Logs do Sistema (Syslog)
-[INPUT]
-    Name         tail
-    Path         /var/log/syslog
-    Tag          servidores.so.*
+# Logs do Sistema (Syslog) - PAUSADO TEMPORARIAMENTE
+#[INPUT]
+#    Name         tail
+#    Path         /var/log/syslog
+#    Tag          servidores.so.*
 
 # === ENVIO PARA OCI OBJECT STORAGE (OUTPUTS) ===
 
@@ -38,14 +38,14 @@
     upload_timeout   1h
     total_file_size  200M
 
-# Envio dos logs do SO
-[OUTPUT]
-    Name         s3
-    Match        servidores.so.*
-    Bucket       backups
-    Region       sa-saopaulo-1
-    Endpoint     https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    # Formato do caminho no bucket para servidores/so
-    S3_Key_Format /servidores/{{ nome_servidor }}/so/logs/%Y/%m/$UUID.log.gz
-    Compression  gzip
-    Store_Dir    /var/log/fluentbit-buffer/so
+# Envio dos logs do SO - PAUSADO TEMPORARIAMENTE
+#[OUTPUT]
+#    Name         s3
+#    Match        servidores.so.*
+#    Bucket       backups
+#    Region       sa-saopaulo-1
+#    Endpoint     https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+#    # Formato do caminho no bucket para servidores/so
+#    S3_Key_Format /servidores/{{ nome_servidor }}/so/logs/%Y/%m/$UUID.log.gz
+#    Compression  gzip
+#    Store_Dir    /var/log/fluentbit-buffer/so
