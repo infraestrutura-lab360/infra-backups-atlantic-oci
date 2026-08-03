@@ -51,3 +51,21 @@
     name: fluent-bit
     state: started
     enabled: yes
+
+- name: Configurar logrotate para a aplicacao AdAlive
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/adalive
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      /home/ubuntu/AdAlive-Apps/AdAlive-doTerrahmlg/AdAliveServer/*.log {
+          daily
+          missingok
+          rotate 7
+          compress
+          notifempty
+          copytruncate
+          dateext
+          dateformat .%Y-%m-%d
+      }

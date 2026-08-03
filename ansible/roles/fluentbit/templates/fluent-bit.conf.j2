@@ -29,9 +29,10 @@
     Region           sa-saopaulo-1
     Endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     
-    # Estrutura: /aplicacoes/nome_do_servidor/logs/ANO/MES/DIA/nome_do_arquivo_HORAMINUTOSEGUNDO.log.gz
-    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmg.log.gz
+    # CORRIGIDO: Adicionado _%H%M%S no final do nome do arquivo para evitar sobrescrita a cada hora
+    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmg_%H%M%S.log.gz
     Compression      gzip
+    
     Store_Dir        /var/log/fluentbit-buffer/app
 
     upload_timeout   1h
