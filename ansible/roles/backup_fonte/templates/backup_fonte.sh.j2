@@ -6,15 +6,18 @@ set -e
 # ==========================================
 # VARIÁVEIS DE AMBIENTE E CAMINHOS
 # ==========================================
-# O Ansible substituirá a variável abaixo pelo nome do servidor (ex: hmg-col-102)
 NOME_SERVIDOR="{{ nome_servidor }}"
+
+# Novo nome da aplicação baseado na pasta
+APP_NAME="AdAlive-doTerrahmlg"
 
 # Estrutura de datas para nomenclatura e diretórios
 DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
-NOME_ARQUIVO="fonte_adalive_${DATA_ARQUIVO}.tar.gz"
+NOME_ARQUIVO="${APP_NAME}_${DATA_ARQUIVO}.tar.gz"
 
-# Caminhos locais e de destino
+# Caminhos locais
+# Mantido o backup da pasta AdAliveServer interna.
 APP_BASE_DIR="/home/ubuntu/AdAlive-Apps/AdAlive-doTerrahmlg"
 APP_FOLDER="AdAliveServer"
 CAMINHO_TMP="/tmp/${NOME_ARQUIVO}"
@@ -29,8 +32,6 @@ OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oracleclou
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando backup do codigo fonte..."
 
-# 1. Compactação do Código
-# Ignoramos pastas pesadas e temporárias (logs, tmp, node_modules) que não são necessárias no backup do fonte
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivos em ${CAMINHO_TMP}..."
 tar --exclude='log/*' \
     --exclude='tmp/*' \
@@ -38,11 +39,12 @@ tar --exclude='log/*' \
     -czf "${CAMINHO_TMP}" \
     -C "${APP_BASE_DIR}" "${APP_FOLDER}"
 
-# 2. Upload para a Oracle Cloud (OCI)
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
-aws s3 cp "${CAMINHO_TMP}" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT}"
+# Adicionada a flag --region para travar o escopo no endpoint da OCI e evitar falhas de multipart
+aws s3 cp "${CAMINHO_TMP}" "${BUCKET_DESTINO}" \
+    --endpoint-url "${OCI_ENDPOINT}" \
+    --region sa-saopaulo-1
 
-# 3. Limpeza Local
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Removendo arquivo temporario local..."
 rm -f "${CAMINHO_TMP}"
 
