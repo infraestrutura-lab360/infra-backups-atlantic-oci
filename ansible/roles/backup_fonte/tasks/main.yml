@@ -1,0 +1,51 @@
+---
+- name: Garantir que o AWS CLI e o tar estao instalados
+  ansible.builtin.apt:
+    name:
+      - awscli
+      - tar
+    state: present
+    update_cache: yes
+
+- name: Garantir que o diretorio .aws existe para o usuario ubuntu
+  ansible.builtin.file:
+    path: /home/ubuntu/.aws
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0700'
+
+- name: Configurar credenciais S3 OCI para o usuario ubuntu
+  ansible.builtin.copy:
+    dest: /home/ubuntu/.aws/credentials
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+    content: |
+      [default]
+      aws_access_key_id = {{ s3_access_key }}
+      aws_secret_access_key = {{ s3_secret_key }}
+
+- name: Criar diretorio para os scripts de automacao
+  ansible.builtin.file:
+    path: /home/ubuntu/scripts
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Implantar script de backup do codigo fonte
+  ansible.builtin.template:
+    src: backup_fonte.sh.j2
+    dest: /home/ubuntu/scripts/backup_fonte.sh
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Agendar backup diario do fonte no Cron (02:00 AM)
+  ansible.builtin.cron:
+    name: "Backup Diario Fonte AdAlive"
+    minute: "0"
+    hour: "2"
+    user: "ubuntu"
+    job: "/home/ubuntu/scripts/backup_fonte.sh >> /home/ubuntu/scripts/backup_fonte.log 2>&1"
