@@ -1,7 +1,6 @@
 pipeline {
     agent any
-    
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -11,8 +10,10 @@ pipeline {
         
         stage('Deploy Fluent Bit (Ansible)') {
             steps {
+                // Aqui está o pulo do gato: puxar a chave SSH E as credenciais do S3 na mesma lista separada por vírgula
                 withCredentials([
-                    sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')
+                    sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+                    usernamePassword(credentialsId: 'oci-s3-fluentbit-keys', usernameVariable: 'OCI_S3_ACCESS_KEY', passwordVariable: 'OCI_S3_SECRET_KEY')
                 ]) {
                     sh '''
                     export ANSIBLE_HOST_KEY_CHECKING=False
@@ -28,7 +29,8 @@ pipeline {
         stage('Deploy Backup Fonte (Ansible)') {
             steps {
                 withCredentials([
-                    sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')
+                    sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+                    usernamePassword(credentialsId: 'oci-s3-fluentbit-keys', usernameVariable: 'OCI_S3_ACCESS_KEY', passwordVariable: 'OCI_S3_SECRET_KEY')
                 ]) {
                     sh '''
                     export ANSIBLE_HOST_KEY_CHECKING=False
