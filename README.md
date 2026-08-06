@@ -59,6 +59,15 @@ O deploy automatizado protege dados sensíveis e gerencia o repositório utiliza
 * **Credencial `oci-s3-fluentbit-keys`:** Injeta as chaves S3 como variáveis de ambiente (`$OCI_S3_CREDS`) no *pipeline*.
 * **Token `deploy-fluentbit-oci-atlantic`:** Token de serviço vitalício e exclusivo para o checkout do repositório via Jenkins.
 
+### Autenticação SSH e Execução do Ansible
+* **Ponto de Atenção - A Chave SSH:** Para garantir o mais alto nível de segurança, a chave privada SSH associada à instância não fica armazenada fisicamente em diretórios do servidor. Ela é gerenciada nativamente pelo cofre de credenciais do Jenkins.
+* **Credencial SSH (Jenkins):** `ssh-key-hmg-102`
+  * **Função:** Armazena a chave privada de forma criptografada. O *pipeline* utiliza o recurso `withCredentials` para gerar um arquivo temporário dinâmico, repassá-lo ao Ansible durante a execução e destruí-lo imediatamente após o uso, anulando o risco de exposição de chaves no disco.
+* **Inventário (`hosts.ini`):** Como a chave é injetada dinamicamente, o inventário mantém um formato limpo, contendo apenas os dados de rede e usuário:
+  ```ini
+  [fluentbit_nodes]
+  hmg-col-102 ansible_host=172.33.18.109 ansible_user=ubuntu nome_servidor=hmg-col-102
+
 ---
 
 ## 🔄 Rotina de Backup e Retenção de Fonte

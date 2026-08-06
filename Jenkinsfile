@@ -15,25 +15,35 @@ pipeline {
         }
         
         stage('Deploy Fluent Bit (Ansible)') {
-            steps {
-                // Aqui executamos a automação de logs
-                sh '''
-                export ANSIBLE_HOST_KEY_CHECKING=False
-                ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_fluentbit.yml \
-                -e "s3_access_key=${OCI_S3_CREDS_USR} s3_secret_key=${OCI_S3_CREDS_PSW}"
-                '''
-            }
+    steps {
+        withCredentials([
+            sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')
+        ]) {
+            sh '''
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_fluentbit.yml \
+                --private-key $SSH_KEY \
+                -u $SSH_USER \
+                -e "s3_access_key=${OCI_S3_ACCESS_KEY} s3_secret_key=${OCI_S3_SECRET_KEY}"
+            '''
         }
+    }
+}
 
         stage('Deploy Backup Fonte (Ansible)') {
-            steps {
-                // Aqui executamos a nova automação de backup do código-fonte
-                sh '''
-                export ANSIBLE_HOST_KEY_CHECKING=False
-                ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_backup.yml \
-                -e "s3_access_key=${OCI_S3_CREDS_USR} s3_secret_key=${OCI_S3_CREDS_PSW}"
-                '''
-            }
+    steps {
+        withCredentials([
+            sshUserPrivateKey(credentialsId: 'ssh-key-hmg-102', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')
+        ]) {
+            sh '''
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_backup.yml \
+                --private-key $SSH_KEY \
+                -u $SSH_USER \
+                -e "s3_access_key=${OCI_S3_ACCESS_KEY} s3_secret_key=${OCI_S3_SECRET_KEY}"
+            '''
         }
+    }
+}
     }
 }
