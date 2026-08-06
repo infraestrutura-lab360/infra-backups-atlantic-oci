@@ -1,15 +1,7 @@
 pipeline {
     agent any
     
-    environment {
-        // 1. O Jenkins puxa a credencial e gera automaticamente OCI_S3_CREDS_USR e OCI_S3_CREDS_PSW
-        OCI_S3_CREDS = credentials('oci-s3-fluentbit-keys')
-        
-        // 2. Mapeamos os valores nativos para os nomes amigáveis que você escolheu usar nos comandos
-        OCI_S3_ACCESS_KEY = "${OCI_S3_CREDS_USR}"
-        OCI_S3_SECRET_KEY = "${OCI_S3_CREDS_PSW}"
-    }
-
+    
     stages {
         stage('Checkout') {
             steps {
