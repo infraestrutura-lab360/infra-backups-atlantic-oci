@@ -4,55 +4,121 @@
     Log_Level    info
     Parsers_File parsers.conf
 
-# === COLETA DE LOGS (INPUTS) ===
-
-# Logs da Aplicação (AdAlive - Rails)
+# ==========================================
+# INPUTS - APLICACAO (AdAlive Rails)
+# ==========================================
 [INPUT]
     Name         tail
     Path         /home/ubuntu/AdAlive-Apps/AdAlive-doTerrahmlg/AdAliveServer/rails_server_doterrahmlg.log
     Tag          aplicacoes.*
     Read_from_Head True
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
 
-# Logs do Sistema (Syslog) - PAUSADO TEMPORARIAMENTE
-#[INPUT]
-#    Name         tail
-#    Path         /var/log/syslog
-#    Tag          servidores.so.*
-#    Read_from_Head True
+# ==========================================
+# INPUTS - SISTEMA OPERACIONAL (SO)
+# ==========================================
+[INPUT]
+    Name        tail
+    Path        /var/log/syslog
+    Tag         so_syslog
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
 
-# === ENVIO PARA OCI OBJECT STORAGE (OUTPUTS) ===
+[INPUT]
+    Name        tail
+    Path        /var/log/auth.log
+    Tag         so_auth.log
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
 
-# Envio dos logs da Aplicação
+[INPUT]
+    Name        tail
+    Path        /var/log/dpkg.log
+    Tag         so_dpkg.log
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
+
+[INPUT]
+    Name        tail
+    Path        /var/log/kern.log
+    Tag         so_kern.log
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
+
+# ==========================================
+# INPUTS - APACHE
+# ==========================================
+[INPUT]
+    Name        tail
+    Path        /var/log/apache2/error.log
+    Tag         apache_error.log
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
+
+[INPUT]
+    Name        tail
+    Path        /var/log/apache2/other_vhosts_access.log
+    Tag         apache_other_vhosts_access.log
+    Buffer_Chunk_Size 5M
+    Buffer_Max_Size   20M
+    storage.type      filesystem
+
+# ==========================================
+# OUTPUTS - APLICACAO (AdAlive Rails)
+# ==========================================
 [OUTPUT]
     Name             s3
     Match            aplicacoes.*
-    Bucket           backups
-    Region           sa-saopaulo-1
-    Endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    
-    # Ajustado para usar a data completa e o UUID antes da extensão .gz
-    S3_Key_Format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
-    Compression      gzip
-    
-    Store_Dir        /var/log/fluentbit-buffer/app
-
+    endpoint         https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    bucket           backups
+    region           {{ s3_region }}
+    aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
+    aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
+    s3_key_format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
+    store_dir        /var/log/fluentbit-buffer/app
     upload_timeout   1h
     total_file_size  200M
+    compression      gzip
 
-# Envio dos logs do SO - PAUSADO TEMPORARIAMENTE
+# ==========================================
+# OUTPUTS - SISTEMA OPERACIONAL (SO)
+# ==========================================
 [OUTPUT]
-#    Name             s3
-#    Match            servidores.so.*
-#    Bucket           backups
-#    Region           sa-saopaulo-1
-#    Endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    
-#    # Aplicando o mesmo padrão de excelência de pastas e nomes
-#    S3_Key_Format    /servidores/{{ nome_servidor }}/so/logs/%Y/%m/%d/syslog.%Y-%m-%d_$UUID.gz
-    
-#    Compression      gzip
-#    Store_Dir        /var/log/fluentbit-buffer/so
+    Name                  s3
+    Match                 so_*
+    endpoint              https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    bucket                backups
+    region                {{ s3_region }}
+    aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
+    aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
+    s3_key_format         /servidores/{{ nome_servidor }}/so/logs/%Y/%m/$TAG[1]-%Y-%m-%d_$UUID.gz
+    s3_key_format_tag_delimiters _
+    store_dir             /var/log/fluentbit-buffer/so
+    upload_timeout        1h
+    total_file_size       200M
+    compression           gzip
 
-# Mantendo a mesma inteligência de rotação
-#    upload_timeout   1h
-#    total_file_size  200M
+# ==========================================
+# OUTPUTS - APACHE
+# ==========================================
+[OUTPUT]
+    Name                  s3
+    Match                 apache_*
+    endpoint              https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    bucket                backups
+    region                {{ s3_region }}
+    aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
+    aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
+    s3_key_format         /servidores/{{ nome_servidor }}/apache/logs/%Y/%m/$TAG[1]-%Y-%m-%d_$UUID.gz
+    s3_key_format_tag_delimiters _
+    store_dir             /var/log/fluentbit-buffer/apache
+    upload_timeout        1h
+    total_file_size       200M
+    compression           gzip
