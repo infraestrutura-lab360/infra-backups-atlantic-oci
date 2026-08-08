@@ -76,9 +76,9 @@
 [OUTPUT]
     Name             s3
     Match            aplicacoes.*
-    endpoint         https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     bucket           backups
-    region           {{ s3_region }}
+    region           sa-saopaulo-1
     aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
     aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
     s3_key_format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
@@ -93,9 +93,9 @@
 [OUTPUT]
     Name                  s3
     Match                 so_*
-    endpoint              https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    endpoint              https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     bucket                backups
-    region                {{ s3_region }}
+    region                sa-saopaulo-1
     aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
     aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
     s3_key_format         /servidores/{{ nome_servidor }}/so/logs/%Y/%m/$TAG[1]-%Y-%m-%d_$UUID.gz
@@ -111,9 +111,9 @@
 [OUTPUT]
     Name                  s3
     Match                 apache_*
-    endpoint              https://{{ s3_namespace }}.compat.objectstorage.{{ s3_region }}.oraclecloud.com
+    endpoint              https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
     bucket                backups
-    region                {{ s3_region }}
+    region                sa-saopaulo-1
     aws_access_key_id     {{ lookup('env', 'OCI_S3_ACCESS_KEY') }}
     aws_secret_access_key {{ lookup('env', 'OCI_S3_SECRET_KEY') }}
     s3_key_format         /servidores/{{ nome_servidor }}/apache/logs/%Y/%m/$TAG[1]-%Y-%m-%d_$UUID.gz
