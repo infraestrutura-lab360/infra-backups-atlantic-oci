@@ -16,11 +16,11 @@
     update_cache: yes
 
 - name: Criar diretorios de buffer para o Fluent Bit
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: fluent-bit
-    group: fluent-bit
+    owner: root
+    group: root
     mode: '0755'
   loop:
     - /var/log/fluentbit-buffer/app
