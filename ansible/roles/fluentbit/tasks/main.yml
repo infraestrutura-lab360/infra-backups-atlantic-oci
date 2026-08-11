@@ -6,7 +6,7 @@
 
 - name: Adicionar o repositório do Fluent Bit
   ansible.builtin.apt_repository:
-    repo: "deb https://packages.fluentbit.io/ubuntu/focal focal main" # Ajuste a versão do SO se necessário (focal, jammy, etc.)
+    repo: "deb https://packages.fluentbit.io/ubuntu/focal focal main"
     state: present
 
 - name: Instalar o Fluent Bit
@@ -15,17 +15,31 @@
     state: present
     update_cache: yes
 
-- name: Criar diretorios de buffer para o Fluent Bit
+- name: Criar diretorios de buffer para o Fluent Bit (SO)
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /var/log/fluentbit-buffer/so
     state: directory
     owner: root
     group: root
     mode: '0755'
-  loop:
-    - /var/log/fluentbit-buffer/app
-    - /var/log/fluentbit-buffer/so
-    - /var/log/fluentbit-buffer/apache
+
+- name: Criar diretorio de buffer para Aplicacoes (Rails)
+  ansible.builtin.file:
+    path: /var/log/fluentbit-buffer/app
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: perfil_rails | default(false) | bool
+
+- name: Criar diretorio de buffer para Apache
+  ansible.builtin.file:
+    path: /var/log/fluentbit-buffer/apache
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: perfil_apache | default(false) | bool
 
 - name: Implantar configuracao do Fluent Bit (Template)
   ansible.builtin.template:
@@ -71,3 +85,4 @@
           dateext
           dateformat .%Y-%m-%d
       }
+  when: perfil_rails | default(false) | bool
