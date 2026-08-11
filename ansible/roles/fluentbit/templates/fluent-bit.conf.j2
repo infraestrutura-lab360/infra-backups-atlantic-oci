@@ -3,6 +3,8 @@
     Daemon       Off
     Log_Level    info
     Parsers_File parsers.conf
+    # Define a pasta raiz onde o Fluent Bit vai gerenciar o buffer em disco
+    storage.path /var/log/fluentbit-buffer
 
 # ==========================================
 # INPUTS - APLICACAO (AdAlive Rails)
