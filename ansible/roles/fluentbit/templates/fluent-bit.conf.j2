@@ -49,7 +49,7 @@
     s3_key_format         /servidores/{{ nome_servidor }}/so/logs/%Y/%m/%d/$TAG[1]-%Y-%m-%d_$UUID.gz
     s3_key_format_tag_delimiters _
     store_dir             /var/log/fluentbit-buffer/so
-    upload_timeout        1h
+    upload_timeout        24h
     total_file_size       200M
     compression           gzip
 
@@ -74,7 +74,7 @@
     region           sa-saopaulo-1
     s3_key_format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
     store_dir        /var/log/fluentbit-buffer/app
-    upload_timeout   1h
+    upload_timeout   24h
     total_file_size  200M
     compression      gzip
 {% endif %}
@@ -111,7 +111,7 @@
     s3_key_format         /servidores/{{ nome_servidor }}/apache/logs/%Y/%m/%d/$TAG[1]-%Y-%m-%d_$UUID.gz
     s3_key_format_tag_delimiters _
     store_dir             /var/log/fluentbit-buffer/apache
-    upload_timeout        1h
+    upload_timeout        24h
     total_file_size       200M
     compression           gzip
 {% endif %}
