@@ -25,8 +25,8 @@ pipeline {
                     ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_fluentbit.yml \
                         -l ${params.AMBIENTE} \
                         --private-key $SSH_KEY \
-                        -u $SSH_USER \
-                        -e "s3_access_key=${OCI_S3_ACCESS_KEY} s3_secret_key=${OCI_S3_SECRET_KEY}"
+                        -u \$SSH_USER \
+                        -e "s3_access_key=\${OCI_S3_ACCESS_KEY} s3_secret_key=\${OCI_S3_SECRET_KEY}"
                     """
                 }
             }
@@ -42,9 +42,9 @@ pipeline {
                     export ANSIBLE_HOST_KEY_CHECKING=False
                     ansible-playbook -i ansible/inventories/hosts.ini ansible/playbooks/deploy_backup.yml \
                         -l ${params.AMBIENTE} \
-                        --private-key $SSH_KEY \
+                        --private-key \$SSH_KEY \
                         -u $SSH_USER \
-                        -e "s3_access_key=${OCI_S3_ACCESS_KEY} s3_secret_key=${OCI_S3_SECRET_KEY}"
+                        -e "s3_access_key=\${OCI_S3_ACCESS_KEY} s3_secret_key=\${OCI_S3_SECRET_KEY}"
                     """
                 }
             }
