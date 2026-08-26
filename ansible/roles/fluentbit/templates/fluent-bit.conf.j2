@@ -75,7 +75,7 @@
     s3_key_format    /aplicacoes/{{ nome_servidor }}/logs/%Y/%m/%d/rails_server_doterrahmlg.log.%Y-%m-%d_$UUID.gz
     store_dir        /var/log/fluentbit-buffer/app
     upload_timeout   24h
-    total_file_size  200M
+    total_file_size  500M
     compression      gzip
 {% endif %}
 
