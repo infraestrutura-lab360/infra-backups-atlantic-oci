@@ -74,7 +74,7 @@
     group: root
     mode: '0644'
     content: |
-      /home/ubuntu/AdAlive-Apps/AdAlive-doTerrahmlg/AdAliveServer/*.log {
+      /home/ubuntu/AdAlive-Apps/{{ nome_app }}/AdAliveServer/*.log {
           su ubuntu ubuntu
           daily
           missingok
