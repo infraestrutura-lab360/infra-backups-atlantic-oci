@@ -40,20 +40,6 @@
     Buffer_Max_Size   20M
     storage.type      filesystem
 
-[OUTPUT]
-    Name                  s3
-    Match                 so_*
-    endpoint              https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    bucket                backups
-    region                sa-saopaulo-1
-    s3_key_format         /servidores/{{ nome_servidor }}/so/logs/%Y/%m/%d/$TAG[1]-%Y-%m-%d_$UUID.gz
-    s3_key_format_tag_delimiters _
-    store_dir             /var/log/fluentbit-buffer/so
-    upload_timeout        24h
-    total_file_size       200M
-    compression           gzip
-
-
 {% if aplicacoes is defined %}
 
 # ==========================================
@@ -73,18 +59,6 @@
     Buffer_Max_Size   20M
     storage.type      filesystem
 
-[OUTPUT]
-    Name             s3
-    Match            {{ app.id_bucket }}.rails
-    endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    bucket           backups
-    region           sa-saopaulo-1
-    s3_key_format    /aplicacoes/{{ nome_servidor }}/{{ app.id_bucket }}/logs/%Y/%m/%d/{{ app.log_principal }}.%Y-%m-%d_$UUID.gz
-    store_dir        /var/log/fluentbit-buffer/{{ app.id_bucket }}-rails
-    upload_timeout   24h
-    total_file_size  500M
-    compression      gzip
-
 {% elif app.tipo_app == 'tomcat' %}
 # --- Aplicativo Tomcat: {{ app.id_bucket }} (Catalina) ---
 [INPUT]
@@ -97,18 +71,6 @@
     storage.type      filesystem
     Ignore_Older 2d
 
-[OUTPUT]
-    Name             s3
-    Match            {{ app.id_bucket }}.catalina
-    endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    bucket           backups
-    region           sa-saopaulo-1
-    s3_key_format    /aplicacoes/{{ nome_servidor }}/{{ app.id_bucket }}/logs/%Y/%m/%d/catalina.%Y-%m-%d_$UUID.gz
-    store_dir        /var/log/fluentbit-buffer/{{ app.id_bucket }}-catalina
-    upload_timeout   24h
-    total_file_size  500M
-    compression      gzip
-
 # --- Aplicativo Tomcat: {{ app.id_bucket }} (Access Log) ---
 [INPUT]
     Name         tail
@@ -119,18 +81,6 @@
     Buffer_Max_Size   20M
     storage.type      filesystem
     Ignore_Older 2d
-
-[OUTPUT]
-    Name             s3
-    Match            {{ app.id_bucket }}.access
-    endpoint         https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    bucket           backups
-    region           sa-saopaulo-1
-    s3_key_format    /aplicacoes/{{ nome_servidor }}/{{ app.id_bucket }}/logs/%Y/%m/%d/localhost_access_log.%Y-%m-%d_$UUID.gz
-    store_dir        /var/log/fluentbit-buffer/{{ app.id_bucket }}-access
-    upload_timeout   24h
-    total_file_size  500M
-    compression      gzip
 
 {% endif %}
 {% endfor %}
@@ -157,16 +107,4 @@
     Buffer_Max_Size   20M
     storage.type      filesystem
 
-[OUTPUT]
-    Name                  s3
-    Match                 apache_*
-    endpoint              https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
-    bucket                backups
-    region                sa-saopaulo-1
-    s3_key_format         /servidores/{{ nome_servidor }}/apache/logs/%Y/%m/%d/$TAG[1]-%Y-%m-%d_$UUID.gz
-    s3_key_format_tag_delimiters _
-    store_dir             /var/log/fluentbit-buffer/apache
-    upload_timeout        24h
-    total_file_size       200M
-    compression           gzip
 {% endif %}

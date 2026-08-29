@@ -11,12 +11,12 @@ DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
 OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App)..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App & Logs)..."
 
 {% if aplicacoes is defined %}
 {% for app in aplicacoes %}
 # =========================================================
-# BACKUP DA APLICAÇÃO: {{ app.id_bucket }} (Tipo: {{ app.tipo_backup }})
+# PROCESSANDO APLICAÇÃO: {{ app.id_bucket }} (Tipo: {{ app.tipo_app }})
 # =========================================================
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando {{ app.id_bucket }}..."
 
@@ -72,10 +72,29 @@ echo "---"
 {% endfor %}
 {% endif %}
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Backup de {{ app.id_bucket }} concluído."
+# =========================================================
+# ENVIO DE LOGS ROTACIONADOS DO DIA PARA A OCI
+# =========================================================
+LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/{% if app.tipo_app == 'rails' %}AdAliveServer{% else %}logs{% endif %}"
+BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_HOJE}/"
+
+if [ -d "${LOG_DIR}" ]; then
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs rotacionados em ${LOG_DIR}..."
+    # Procura arquivos .gz gerados pelo logrotate com a data de hoje ou compactados recentemente
+    for log_gz in "${LOG_DIR}"/*.gz; do
+        if [ -f "$log_gz" ]; then
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log compactado $(basename "$log_gz") para ${BUCKET_LOGS}..."
+            aws s3 cp "$log_gz" "${BUCKET_LOGS}" \
+                --endpoint-url "${OCI_ENDPOINT}" \
+                --region sa-saopaulo-1
+        fi
+    done
+fi
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processamento de {{ app.id_bucket }} concluído."
 echo "---------------------------------------------------------"
 
 {% endfor %}
 {% endif %}
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Todos os backups foram finalizados com sucesso!"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Rotina consolidada finalizada com sucesso!"
