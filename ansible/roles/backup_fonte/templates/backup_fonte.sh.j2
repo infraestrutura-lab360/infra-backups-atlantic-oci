@@ -87,25 +87,37 @@ BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/$
 if [ -d "${LOG_DIR}" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs recentes em ${LOG_DIR}..."
     
-    # Busca estritamente arquivos (.gz, .log, .txt) que contenham a DATA DE HOJE ou DATA DE ONTEM no nome.
-    # Isso ignora arquivos como catalina.out (que não tem data) e qualquer arquivo de dias anteriores.
     while IFS= read -r log_file; do
         if [ -f "$log_file" ]; then
             # Verifica a extensão real do arquivo
             if [[ "$log_file" == *.gz ]]; then
                 ARQUIVO_FINAL="$log_file"
             else
-                # Se não for .gz, tenta compactar silenciosamente (ignorando se já existir)
                 gzip -kf "$log_file" || true
                 ARQUIVO_FINAL="${log_file}.gz"
             fi
             
-            # Só faz o upload se o arquivo final compactado realmente existir
             if [ -f "$ARQUIVO_FINAL" ]; then
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log $(basename "$ARQUIVO_FINAL") para ${BUCKET_LOGS}..."
-                aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS}" \
-                    --endpoint-url "${OCI_ENDPOINT}" \
-                    --region sa-saopaulo-1
+                # Extrai a data contida no nome do arquivo usando regex (ex: 2026-08-28)
+                DATA_DO_ARQUIVO=$(echo "$(basename "$ARQUIVO_FINAL")" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                
+                if [ -n "$DATA_DO_ARQUIVO" ]; then
+                    # Transforma o traço em barra (2026-08-28 -> 2026/08/28)
+                    DATA_S3=$(echo "$DATA_DO_ARQUIVO" | tr '-' '/')
+                    BUCKET_LOGS_DINAMICO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_S3}/"
+                    
+                    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Roteando log $(basename "$ARQUIVO_FINAL") para a pasta exata: ${BUCKET_LOGS_DINAMICO}..."
+                    aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS_DINAMICO}" \
+                        --endpoint-url "${OCI_ENDPOINT}" \
+                        --region sa-saopaulo-1
+                else
+                    # Fallback de segurança se não achar data no nome (usa a data de execução do script)
+                    BUCKET_LOGS_PADRAO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_HOJE}/"
+                    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log sem data $(basename "$ARQUIVO_FINAL") para ${BUCKET_LOGS_PADRAO}..."
+                    aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS_PADRAO}" \
+                        --endpoint-url "${OCI_ENDPOINT}" \
+                        --region sa-saopaulo-1
+                fi
             fi
         fi
     done < <(find "${LOG_DIR}" -maxdepth 1 -type f \( -name "*${DATA_ARQUIVO}*" -o -name "*${DATA_ONTEM}*" \) \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
