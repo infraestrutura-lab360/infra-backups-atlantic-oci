@@ -40,36 +40,31 @@ tar --exclude='log/*' \
 {% elif app.tipo_backup == 'war' %}
 APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu') }}"
 APP_FOLDER="{{ app.nome_pasta }}"
-WAR_FILE="{{ app.nome_war }}"
 LOCAL_BACKUP_DIR="${APP_BASE_DIR}/${APP_FOLDER}/backups"
+
+# Cria a pasta de backup segura caso não exista
+mkdir -p "${LOCAL_BACKUP_DIR}"
+
+{% for war in app.arquivos_war %}
+WAR_FILE="{{ war }}"
 NOME_ARQUIVO="${WAR_FILE}.${DATA_ARQUIVO}.tar.gz"
 CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
 BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/war/${DATA_HOJE}/${NOME_ARQUIVO}"
 
-# Cria a pasta de backup segura (fora do webapps) caso não exista
-mkdir -p "${LOCAL_BACKUP_DIR}"
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR de ${APP_FOLDER}/webapps..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR (${WAR_FILE}) de ${APP_FOLDER}/webapps..."
 tar -czf "${CAMINHO_BACKUP}" \
     -C "${APP_BASE_DIR}/${APP_FOLDER}/webapps" "${WAR_FILE}"
-{% endif %}
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload de ${NOME_ARQUIVO} para ${BUCKET_DESTINO}..."
 aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" \
     --endpoint-url "${OCI_ENDPOINT}" \
     --region sa-saopaulo-1
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos de {{ app.id_bucket }}..."
-{% if app.tipo_backup == 'fonte' %}
-find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_pasta }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
-{% elif app.tipo_backup == 'war' %}
-find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_war }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
-{% endif %}
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Backup de {{ app.id_bucket }} concluído."
-echo "---------------------------------------------------------"
-
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos de ${WAR_FILE}..."
+find "${LOCAL_BACKUP_DIR}" -type f -name "${WAR_FILE}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
+echo "---"
 {% endfor %}
+
 {% endif %}
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Todos os backups foram finalizados com sucesso!"

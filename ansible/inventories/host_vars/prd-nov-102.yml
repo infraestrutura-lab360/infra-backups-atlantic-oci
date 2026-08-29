@@ -9,22 +9,34 @@ aplicacoes:
     log_principal: "rails_server_camprevrh.log"
 
   - id_bucket: "camprev-novaprev"
-    caminho_base: "/home/ubuntu"                             # <--- Caminho base real
-    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev"          # Ajuste para a pasta real do servidor, se necessário
-    nome_war: "novaprev.war"                                 # Nome do arquivo WAR para empacotar
+    caminho_base: "/home/ubuntu"                                      # <--- Caminho base real
+    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev"                   # Ajuste para a pasta real do servidor, se necessário
     tipo_app: "tomcat"
     tipo_backup: "war"
+    arquivos_war:                                                     # Lista dos arquivos WAR para compactar
+      - "novaprev.war"
+      - "novaprev2.war"
+      - "autoatendimento.war"
+      - "autoatendimento-votacao.war"
+      - "esocial-camprev.war"
+      - "esocial-servicos-camprev.war"
+      - "previdencia-api.war"
 
   - id_bucket: "camprev-novaprev-debug"
-    caminho_base: "/home/ubuntu"                                     # <--- Caminho base real
-    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev-debug"            # Ajuste para a pasta real do servidor, se necessário
-    nome_war: "esocial-camprev.war"                                  # Nome do arquivo WAR para empacotar
+    caminho_base: "/home/ubuntu"
+    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev-debug"
     tipo_app: "tomcat"
     tipo_backup: "war"
+    arquivos_war:
+      - "esocial-camprev.war"
 
   - id_bucket: "camprev-folha"
-    caminho_base: "/home/ubuntu"                             # <--- Caminho base real
-    nome_pasta: "apache-tomcat-9.0.21-prd-folha"             # Ajuste para a pasta real do servidor, se necessário
-    nome_war: "folhapar.war"
+    caminho_base: "/home/ubuntu"
+    nome_pasta: "apache-tomcat-9.0.21-prd-folha"
     tipo_app: "tomcat"
     tipo_backup: "war"
+    arquivos_war:
+      - "folha-autoatendimento-par.war"
+      - "folhapar.war"
+      - "recadastramento-api.war"
+      - "rh-api.war"
