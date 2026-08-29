@@ -9,6 +9,7 @@ set -e
 NOME_SERVIDOR="{{ nome_servidor }}"
 DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
+DATA_ONTEM=$(date -d "yesterday" +%Y-%m-%d)
 OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App & Logs)..."
@@ -86,10 +87,11 @@ BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/$
 if [ -d "${LOG_DIR}" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs recentes em ${LOG_DIR}..."
     
-    # Procura por arquivos .gz, .log ou .txt modificados nas últimas 24 horas (-mtime -1)
+    # Busca estritamente arquivos (.gz, .log, .txt) que contenham a DATA DE HOJE ou DATA DE ONTEM no nome.
+    # Isso ignora arquivos como catalina.out (que não tem data) e qualquer arquivo de dias anteriores.
     while IFS= read -r log_file; do
         if [ -f "$log_file" ]; then
-            # Se o arquivo não estiver compactado, compacta na hora antes de subir para poupar banda
+            # Se o arquivo não estiver compactado, compacta na hora antes de subir
             if [[ "$log_file" != *.gz ]]; then
                 gzip -k "$log_file"
                 log_file="${log_file}.gz"
@@ -100,7 +102,7 @@ if [ -d "${LOG_DIR}" ]; then
                 --endpoint-url "${OCI_ENDPOINT}" \
                 --region sa-saopaulo-1
         fi
-    done < <(find "${LOG_DIR}" -type f \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \) -mtime -1 ! -name "*catalina.out*")
+    done < <(find "${LOG_DIR}" -maxdepth 1 -type f \( -name "*${DATA_ARQUIVO}*" -o -name "*${DATA_ONTEM}*" \) \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
 fi
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processamento de {{ app.id_bucket }} concluído."
