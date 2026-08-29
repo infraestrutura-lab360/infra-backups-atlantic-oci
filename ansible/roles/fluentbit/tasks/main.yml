@@ -23,14 +23,15 @@
     group: root
     mode: '0755'
 
-- name: Criar diretorio de buffer para Aplicacoes (Rails)
+- name: Criar diretorio de buffer para as Aplicacoes
   ansible.builtin.file:
-    path: /var/log/fluentbit-buffer/app
+    path: "/var/log/fluentbit-buffer/apps/{{ item.id_bucket }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
-  when: perfil_rails | default(false) | bool
+  loop: "{{ aplicacoes | default([]) }}"
+  when: aplicacoes is defined
 
 - name: Criar diretorio de buffer para Apache
   ansible.builtin.file:
@@ -67,14 +68,16 @@
     state: started
     enabled: yes
 
-- name: Configurar logrotate para a aplicacao AdAlive
+- name: Configurar logrotate para as aplicacoes
   ansible.builtin.copy:
-    dest: /etc/logrotate.d/adalive
+    dest: /etc/logrotate.d/aplicacoes
     owner: root
     group: root
     mode: '0644'
     content: |
-      /home/ubuntu/AdAlive-Apps/{{ nome_app }}/AdAliveServer/*.log {
+      {% for app in aplicacoes %}
+      {% if app.tipo_app == 'rails' %}
+      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/AdAliveServer/*.log {
           su ubuntu ubuntu
           daily
           missingok
@@ -85,4 +88,19 @@
           dateext
           dateformat .%Y-%m-%d
       }
-  when: perfil_rails | default(false) | bool
+      {% elif app.tipo_app == 'tomcat' %}
+      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/logs/*.log
+      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/logs/*.txt {
+          su ubuntu ubuntu
+          daily
+          missingok
+          rotate 7
+          compress
+          notifempty
+          copytruncate
+          dateext
+          dateformat .%Y-%m-%d
+      }
+      {% endif %}
+      {% endfor %}
+  when: aplicacoes is defined

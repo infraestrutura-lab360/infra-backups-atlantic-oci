@@ -4,45 +4,70 @@
 set -e
 
 # ==========================================
-# VARIÁVEIS DE AMBIENTE E CAMINHOS
+# VARIÁVEIS GERAIS DO AMBIENTE
 # ==========================================
-NOME_SERVIDOR="{{ nome_servidor }}"
-APP_NAME="{{ nome_app }}"
 
+NOME_SERVIDOR="{{ nome_servidor }}"
 DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
-NOME_ARQUIVO="${APP_NAME}.${DATA_ARQUIVO}.tar.gz"
-
-# Caminhos locais
 APP_BASE_DIR="/home/ubuntu/AdAlive-Apps"
-APP_FOLDER="{{ nome_app }}"
 LOCAL_BACKUP_DIR="/home/ubuntu/AdAlive-Apps"
-CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
-
-# Configuração da OCI S3
-BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/fonte/${DATA_HOJE}/${NOME_ARQUIVO}"
 OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
 
-# ==========================================
-# EXECUÇÃO DO BACKUP
-# ==========================================
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App)..."
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando backup do codigo fonte..."
+{% if aplicacoes is defined %}
+{% for app in aplicacoes %}
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivos em ${CAMINHO_BACKUP}..."
+# =========================================================
+# BACKUP DA APLICAÇÃO: {{ app.id_bucket }} (Tipo: {{ app.tipo_backup }})
+# =========================================================
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando {{ app.id_bucket }}..."
+
+{% if app.tipo_backup == 'fonte' %}
+APP_FOLDER="{{ app.nome_pasta }}"
+NOME_ARQUIVO="${APP_FOLDER}.${DATA_ARQUIVO}.tar.gz"
+CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
+BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/fonte/${DATA_HOJE}/${NOME_ARQUIVO}"
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando código-fonte de ${APP_FOLDER}..."
 tar --exclude='log/*' \
     --exclude='tmp/*' \
     --exclude='node_modules/*' \
     -czf "${CAMINHO_BACKUP}" \
     -C "${APP_BASE_DIR}" "${APP_FOLDER}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
+{% elif app.tipo_backup == 'war' %}
+APP_FOLDER="{{ app.nome_pasta }}"
+WAR_FILE="{{ app.nome_war }}"
+NOME_ARQUIVO="${WAR_FILE}.${DATA_ARQUIVO}.tar.gz"
+CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
+BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/war/${DATA_HOJE}/${NOME_ARQUIVO}"
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR de ${APP_FOLDER}..."
+
+# Compacta apenas o arquivo war dentro da pasta da aplicação
+tar -czf "${CAMINHO_BACKUP}" \
+    -C "${APP_BASE_DIR}/${APP_FOLDER}" "${WAR_FILE}"
+{% endif %}
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload de ${NOME_ARQUIVO} para ${BUCKET_DESTINO}..."
 aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" \
     --endpoint-url "${OCI_ENDPOINT}" \
     --region sa-saopaulo-1
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos..."
-# O comando abaixo deleta todos os arquivos .tar.gz desta aplicacao, EXCETO o do dia atual
-find "${LOCAL_BACKUP_DIR}" -type f -name "${APP_NAME}_*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos de {{ app.id_bucket }}..."
+{% if app.tipo_backup == 'fonte' %}
+find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_pasta }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
+{% elif app.tipo_backup == 'war' %}
+find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_war }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
+{% endif %}
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Backup finalizado com sucesso!"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Backup de {{ app.id_bucket }} concluído."
+echo "---------------------------------------------------------"
+
+{% endfor %}
+{% endif %}
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Todos os backups foram finalizados com sucesso!"
