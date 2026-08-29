@@ -1,0 +1,9 @@
+---
+perfil_apache: true
+
+aplicacoes:
+  - id_bucket: "adalive-doterrahmlg"        # Nome usado na taxonomia do S3
+    nome_pasta: "AdAlive-doTerrahmlg"       # Nome da pasta física no servidor ubuntu
+    tipo_app: "rails"                       # Usado pelo Fluent Bit (se rails ou tomcat)
+    tipo_backup: "fonte"                    # Usado na url do S3 (fonte ou war)
+    log_principal: "rails_server_doterrahmlg.log"

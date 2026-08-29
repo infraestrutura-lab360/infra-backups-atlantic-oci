@@ -1,0 +1,27 @@
+---
+perfil_apache: true
+
+aplicacoes:
+  - id_bucket: "adalive-camprevrh"
+    nome_pasta: "AdAlive-Camprevrh"
+    tipo_app: "rails"
+    tipo_backup: "fonte"
+    log_principal: "rails_server_camprevrh.log"
+
+  - id_bucket: "camprev-novaprev"
+    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev"          # Ajuste para a pasta real do servidor, se necessário
+    nome_war: "novaprev.war"                                 # Nome do arquivo WAR para empacotar
+    tipo_app: "tomcat"
+    tipo_backup: "war"
+
+  - id_bucket: "camprev-novaprev-debug"
+    nome_pasta: "apache-tomcat-9.0.21-prd-novaprev-debug"            # Ajuste para a pasta real do servidor, se necessário
+    nome_war: "esocial-camprev.war"                                  # Nome do arquivo WAR para empacotar
+    tipo_app: "tomcat"
+    tipo_backup: "war"
+
+  - id_bucket: "camprev-folha"
+    nome_pasta: "apache-tomcat-9.0.21-prd-folha"             # Ajuste para a pasta real do servidor, se necessário
+    nome_war: "folhapar.war"
+    tipo_app: "tomcat"
+    tipo_backup: "war"
