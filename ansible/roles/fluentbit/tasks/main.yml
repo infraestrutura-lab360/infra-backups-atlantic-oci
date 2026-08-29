@@ -68,6 +68,14 @@
     state: started
     enabled: yes
 
+- name: Garantir que o diretorio de logs do Rails existe
+  ansible.builtin.file:
+    path: /home/ubuntu/AdAlive-Apps/Logs
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
 - name: Configurar logrotate para as aplicacoes
   ansible.builtin.copy:
     dest: /etc/logrotate.d/aplicacoes
@@ -75,9 +83,8 @@
     group: root
     mode: '0644'
     content: |
-      {% for app in aplicacoes %}
-      {% if app.tipo_app == 'rails' %}
-      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/AdAliveServer/*.log {
+      {% elif app.tipo_app == 'rails' %}
+      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs/*.log {
           su ubuntu ubuntu
           daily
           missingok

@@ -72,17 +72,20 @@ echo "---"
 {% endfor %}
 {% endif %}
 
-# ===============================================
-# ENVIO DE LOGS ROTACIONADOS DO DIA PARA A OCI 
-# ===============================================
-LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/{% if app.tipo_app == 'rails' %}AdAliveServer{% else %}logs{% endif %}"
+# =========================================================
+# ENVIO DE LOGS ROTACIONADOS DO DIA PARA A OCI (APENAS HOJE)
+# =========================================================
+{% if app.tipo_app == 'rails' %}
+LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs"
+{% else %}
+LOG_DIR="{{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs"
+{% endif %}
+
 BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_HOJE}/"
 
 if [ -d "${LOG_DIR}" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs compactados recentes em ${LOG_DIR}..."
     
-    # Usa o find para pegar APENAS arquivos .gz modificados nas últimas 24 horas (-mtime -1)
-    # Isso impede que arquivos legados ou antigos sejam enviados em massa para a nuvem.
     while IFS= read -r log_gz; do
         if [ -f "$log_gz" ]; then
             echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log de hoje $(basename "$log_gz") para ${BUCKET_LOGS}..."
