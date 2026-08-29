@@ -77,7 +77,7 @@
     content: |
       {% for app in aplicacoes %}
       {% if app.tipo_app == 'rails' %}
-      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/AdAliveServer/*.log {
+      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/AdAliveServer/*.log {
           su ubuntu ubuntu
           daily
           missingok
@@ -89,8 +89,8 @@
           dateformat .%Y-%m-%d
       }
       {% elif app.tipo_app == 'tomcat' %}
-      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/logs/*.log
-      /home/ubuntu/AdAlive-Apps/{{ app.nome_pasta }}/logs/*.txt {
+      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/logs/*.log
+      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/logs/*.txt {
           su ubuntu ubuntu
           daily
           missingok

@@ -26,6 +26,7 @@ echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App)..."
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando {{ app.id_bucket }}..."
 
 {% if app.tipo_backup == 'fonte' %}
+APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}"
 APP_FOLDER="{{ app.nome_pasta }}"
 NOME_ARQUIVO="${APP_FOLDER}.${DATA_ARQUIVO}.tar.gz"
 CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
@@ -39,17 +40,18 @@ tar --exclude='log/*' \
     -C "${APP_BASE_DIR}" "${APP_FOLDER}"
 
 {% elif app.tipo_backup == 'war' %}
+APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}"
 APP_FOLDER="{{ app.nome_pasta }}"
 WAR_FILE="{{ app.nome_war }}"
 NOME_ARQUIVO="${WAR_FILE}.${DATA_ARQUIVO}.tar.gz"
 CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
 BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/war/${DATA_HOJE}/${NOME_ARQUIVO}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR de ${APP_FOLDER}..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR de ${APP_FOLDER}/webapps..."
 
-# Compacta apenas o arquivo war dentro da pasta da aplicação
+# Compacta apenas o arquivo war dentro da pasta webapps da aplicação
 tar -czf "${CAMINHO_BACKUP}" \
-    -C "${APP_BASE_DIR}/${APP_FOLDER}" "${WAR_FILE}"
+    -C "${APP_BASE_DIR}/${APP_FOLDER}/webapps" "${WAR_FILE}"
 {% endif %}
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload de ${NOME_ARQUIVO} para ${BUCKET_DESTINO}..."
