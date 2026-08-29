@@ -97,7 +97,9 @@
           dateformat .%Y-%m-%d
       }
       {% elif app.tipo_app == 'tomcat' %}
-      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina.out {
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina.out
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.log
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.txt {
           su ubuntu ubuntu
           daily
           missingok
