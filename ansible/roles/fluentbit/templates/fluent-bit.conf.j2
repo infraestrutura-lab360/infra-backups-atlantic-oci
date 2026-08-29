@@ -89,12 +89,13 @@
 # --- Aplicativo Tomcat: {{ app.id_bucket }} (Catalina) ---
 [INPUT]
     Name         tail
-    Path         {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/logs/catalina*
+    Path         {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina*
     Tag          {{ app.id_bucket }}.catalina
     Read_from_Head True
     Buffer_Chunk_Size 5M
     Buffer_Max_Size   20M
     storage.type      filesystem
+    Ignore_Older 2d
 
 [OUTPUT]
     Name             s3
@@ -111,12 +112,13 @@
 # --- Aplicativo Tomcat: {{ app.id_bucket }} (Access Log) ---
 [INPUT]
     Name         tail
-    Path         {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/{{ app.nome_pasta }}/logs/localhost_access_log*
+    Path         {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/localhost_access_log*
     Tag          {{ app.id_bucket }}.access
     Read_from_Head True
     Buffer_Chunk_Size 5M
     Buffer_Max_Size   20M
     storage.type      filesystem
+    Ignore_Older 2d
 
 [OUTPUT]
     Name             s3
