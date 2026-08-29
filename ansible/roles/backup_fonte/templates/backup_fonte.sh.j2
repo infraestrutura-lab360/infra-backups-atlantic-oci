@@ -91,16 +91,22 @@ if [ -d "${LOG_DIR}" ]; then
     # Isso ignora arquivos como catalina.out (que não tem data) e qualquer arquivo de dias anteriores.
     while IFS= read -r log_file; do
         if [ -f "$log_file" ]; then
-            # Se o arquivo não estiver compactado, compacta na hora antes de subir
-            if [[ "$log_file" != *.gz ]]; then
-                gzip -k "$log_file"
-                log_file="${log_file}.gz"
+            # Verifica a extensão real do arquivo
+            if [[ "$log_file" == *.gz ]]; then
+                ARQUIVO_FINAL="$log_file"
+            else
+                # Se não for .gz, tenta compactar silenciosamente (ignorando se já existir)
+                gzip -kf "$log_file" || true
+                ARQUIVO_FINAL="${log_file}.gz"
             fi
             
-            echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log $(basename "$log_file") para ${BUCKET_LOGS}..."
-            aws s3 cp "$log_file" "${BUCKET_LOGS}" \
-                --endpoint-url "${OCI_ENDPOINT}" \
-                --region sa-saopaulo-1
+            # Só faz o upload se o arquivo final compactado realmente existir
+            if [ -f "$ARQUIVO_FINAL" ]; then
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log $(basename "$ARQUIVO_FINAL") para ${BUCKET_LOGS}..."
+                aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS}" \
+                    --endpoint-url "${OCI_ENDPOINT}" \
+                    --region sa-saopaulo-1
+            fi
         fi
     done < <(find "${LOG_DIR}" -maxdepth 1 -type f \( -name "*${DATA_ARQUIVO}*" -o -name "*${DATA_ONTEM}*" \) \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
 fi
