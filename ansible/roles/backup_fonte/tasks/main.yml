@@ -1,4 +1,72 @@
 ---
+# ==========================================
+# LIMPEZA DO AMBIENTE (REMOVER FLUENT BIT)
+# ==========================================
+- name: Parar, desabilitar e remover o Fluent Bit completamente
+  ansible.builtin.apt:
+    name: fluent-bit
+    state: absent
+    purge: yes
+  ignore_errors: yes # Ignora erro caso ele já tenha sido removido
+
+# ==========================================
+# PREPARAÇÃO DE LOGS (LOGROTATE E PASTAS)
+# ==========================================
+- name: Garantir que o diretorio de logs do Rails existe
+  ansible.builtin.file:
+    path: /home/ubuntu/AdAlive-Apps/Logs
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Configurar logrotate para as aplicacoes
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/aplicacoes
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      {% set ns = namespace(rails_rotacionado=false) %}
+      {% for app in aplicacoes %}
+      {% if app.tipo_app == 'rails' %}
+      {% if not ns.rails_rotacionado %}
+      {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs/*.log {
+          su ubuntu ubuntu
+          daily
+          missingok
+          rotate 7
+          compress
+          notifempty
+          copytruncate
+          dateext
+          dateyesterday
+          dateformat .%Y-%m-%d
+      }
+      {% set ns.rails_rotacionado = true %}
+      {% endif %}
+      {% elif app.tipo_app == 'tomcat' %}
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina.out
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.log
+      {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.txt {
+          su ubuntu ubuntu
+          daily
+          missingok
+          rotate 7
+          compress
+          notifempty
+          copytruncate
+          dateext
+          dateyesterday
+          dateformat .%Y-%m-%d
+      }
+      {% endif %}
+      {% endfor %}
+  when: aplicacoes is defined
+
+# ==========================================
+# DEPENDÊNCIAS E CREDENCIAIS DE BACKUP
+# ==========================================
 - name: Garantir que o AWS CLI e o tar estao instalados
   ansible.builtin.apt:
     name:
@@ -34,6 +102,9 @@
     group: ubuntu
     mode: '0755'
 
+# ==========================================
+# IMPLANTAÇÃO DOS SCRIPTS E CRONJOBS
+# ==========================================
 - name: Implantar script de backup do codigo fonte e WAR
   ansible.builtin.template:
     src: backup_fonte.sh.j2

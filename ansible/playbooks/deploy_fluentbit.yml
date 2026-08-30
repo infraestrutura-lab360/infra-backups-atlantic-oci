@@ -1,6 +1,0 @@
----
-- name: Implantacao e Configuracao do Fluent Bit
-  hosts: all
-  become: yes
-  roles:
-    - role: ../roles/fluentbit
