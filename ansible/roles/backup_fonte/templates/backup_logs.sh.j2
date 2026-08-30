@@ -17,14 +17,25 @@ echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando logs de {{ app.id_bucket }}..."
 
 {% if app.tipo_app == 'rails' %}
 LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs"
+# Pega o prefixo do log principal (ex: rails_server_camprev2) para não roubar o log da outra app
+LOG_PREFIX=$(echo "{{ app.log_principal }}" | cut -d'.' -f1)
 {% else %}
 LOG_DIR="{{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs"
+LOG_PREFIX=""
 {% endif %}
 
 BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_ONTEM_S3}/"
 
 if [ -d "${LOG_DIR}" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs finalizados do dia ${DATA_ONTEM} em ${LOG_DIR}..."
+    
+    if [ -n "$LOG_PREFIX" ]; then
+        # Busca FILTRADA: Apenas logs desta app Rails específica (evita duplicar uploads)
+        CMD_FIND="find \"${LOG_DIR}\" -maxdepth 1 -type f -name \"*${DATA_ONTEM}*\" -name \"*${LOG_PREFIX}*\" \( -name \"*.gz\" -o -name \"*.log\" -o -name \"*.txt\" \)"
+    else
+        # Busca PADRÃO: Pega todos os logs do Tomcat
+        CMD_FIND="find \"${LOG_DIR}\" -maxdepth 1 -type f -name \"*${DATA_ONTEM}*\" \( -name \"*.gz\" -o -name \"*.log\" -o -name \"*.txt\" \)"
+    fi
     
     while IFS= read -r log_file; do
         if [ -f "$log_file" ]; then
@@ -42,7 +53,7 @@ if [ -d "${LOG_DIR}" ]; then
                     --region sa-saopaulo-1
             fi
         fi
-    done < <(find "${LOG_DIR}" -maxdepth 1 -type f -name "*${DATA_ONTEM}*" \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
+    done < <(eval "$CMD_FIND")
 fi
 echo "---------------------------------------------------------"
 {% endfor %}
