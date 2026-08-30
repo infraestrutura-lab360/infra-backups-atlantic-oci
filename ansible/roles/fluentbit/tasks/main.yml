@@ -83,8 +83,10 @@
     group: root
     mode: '0644'
     content: |
+      {% set ns = namespace(rails_rotacionado=false) %}
       {% for app in aplicacoes %}
       {% if app.tipo_app == 'rails' %}
+      {% if not ns.rails_rotacionado %}
       {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs/*.log {
           su ubuntu ubuntu
           daily
@@ -97,6 +99,8 @@
           dateyesterday
           dateformat .%Y-%m-%d
       }
+      {% set ns.rails_rotacionado = true %}
+      {% endif %}
       {% elif app.tipo_app == 'tomcat' %}
       {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina.out
       {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.log

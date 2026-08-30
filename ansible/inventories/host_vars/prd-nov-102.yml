@@ -8,6 +8,12 @@ aplicacoes:
     tipo_backup: "fonte"
     log_principal: "rails_server_camprevrh.log"
 
+  - id_bucket: "adalive-camprev2"
+    nome_pasta: "AdAlive-Camprev2"
+    tipo_app: "rails"
+    tipo_backup: "fonte"
+    log_principal: "rails_server_camprev2.log"
+
   - id_bucket: "camprev-novaprev"
     caminho_base: "/home/ubuntu"                                      # <--- Caminho base real
     nome_pasta: "apache-tomcat-9.0.21-prd-novaprev"                   # Ajuste para a pasta real do servidor, se necessário
