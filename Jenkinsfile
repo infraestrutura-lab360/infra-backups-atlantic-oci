@@ -19,7 +19,7 @@ pipeline {
                     
                     withCredentials([
                         sshUserPrivateKey(credentialsId: chaveSSH, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
-                        usernamePassword(credentialsId: 'oci-s3-fluentbit-keys', usernameVariable: 'OCI_S3_ACCESS_KEY', passwordVariable: 'OCI_S3_SECRET_KEY')
+                        usernamePassword(credentialsId: 'oci-atlantic-s3-backups-keys', usernameVariable: 'OCI_S3_ACCESS_KEY', passwordVariable: 'OCI_S3_SECRET_KEY')
                     ]) {
                         sh """
                         export ANSIBLE_HOST_KEY_CHECKING=False
