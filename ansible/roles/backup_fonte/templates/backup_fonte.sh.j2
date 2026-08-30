@@ -1,26 +1,19 @@
 #!/bin/bash
-
-# Aborta o script em caso de qualquer erro
 set -e
 
 # ==========================================
-# VARIÁVEIS GERAIS DO AMBIENTE
+# VARIÁVEIS GERAIS DO AMBIENTE (FONTE/WAR)
 # ==========================================
 NOME_SERVIDOR="{{ nome_servidor }}"
 DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
-DATA_ONTEM=$(date -d "yesterday" +%Y-%m-%d)
-DATA_ONTEM_S3=$(date -d "yesterday" +%Y/%m/%d)
 OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup (Multi-App & Logs)..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup EXCLUSIVA DE FONTE/WAR..."
 
 {% if aplicacoes is defined %}
 {% for app in aplicacoes %}
-# =========================================================
-# PROCESSANDO APLICAÇÃO: {{ app.id_bucket }} (Tipo: {{ app.tipo_app }})
-# =========================================================
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando {{ app.id_bucket }}..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando aplicação: {{ app.id_bucket }}..."
 
 {% if app.tipo_backup == 'fonte' %}
 APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}"
@@ -31,26 +24,18 @@ CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
 BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/fonte/${DATA_HOJE}/${NOME_ARQUIVO}"
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando código-fonte de ${APP_FOLDER}..."
-tar --exclude='log/*' \
-    --exclude='tmp/*' \
-    --exclude='node_modules/*' \
-    -czf "${CAMINHO_BACKUP}" \
-    -C "${APP_BASE_DIR}" "${APP_FOLDER}"
+tar --exclude='log/*' --exclude='tmp/*' --exclude='node_modules/*' -czf "${CAMINHO_BACKUP}" -C "${APP_BASE_DIR}" "${APP_FOLDER}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload de ${NOME_ARQUIVO} para ${BUCKET_DESTINO}..."
-aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" \
-    --endpoint-url "${OCI_ENDPOINT}" \
-    --region sa-saopaulo-1
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
+aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT}" --region sa-saopaulo-1
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos de {{ app.id_bucket }}..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups antigos..."
 find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_pasta }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
 
 {% elif app.tipo_backup == 'war' %}
 APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu') }}"
 APP_FOLDER="{{ app.nome_pasta }}"
 LOCAL_BACKUP_DIR="${APP_BASE_DIR}/${APP_FOLDER}/backups"
-
-# Cria a pasta de backup segura caso não exista
 mkdir -p "${LOCAL_BACKUP_DIR}"
 
 {% for war in app.arquivos_war %}
@@ -59,62 +44,18 @@ NOME_ARQUIVO="${WAR_FILE}.${DATA_ARQUIVO}.tar.gz"
 CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
 BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/war/${DATA_HOJE}/${NOME_ARQUIVO}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando arquivo WAR (${WAR_FILE}) de ${APP_FOLDER}/webapps..."
-tar -czf "${CAMINHO_BACKUP}" \
-    -C "${APP_BASE_DIR}/${APP_FOLDER}/webapps" "${WAR_FILE}"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando WAR (${WAR_FILE})..."
+tar -czf "${CAMINHO_BACKUP}" -C "${APP_BASE_DIR}/${APP_FOLDER}/webapps" "${WAR_FILE}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload de ${NOME_ARQUIVO} para ${BUCKET_DESTINO}..."
-aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" \
-    --endpoint-url "${OCI_ENDPOINT}" \
-    --region sa-saopaulo-1
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
+aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT}" --region sa-saopaulo-1
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups locais antigos de ${WAR_FILE}..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups antigos de ${WAR_FILE}..."
 find "${LOCAL_BACKUP_DIR}" -type f -name "${WAR_FILE}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
-echo "---"
 {% endfor %}
 {% endif %}
-
-# =========================================================
-# ENVIO DE LOGS DO DIA ANTERIOR (FECHADOS/CONSOLIDADOS)
-# =========================================================
-{% if app.tipo_app == 'rails' %}
-LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs"
-{% else %}
-LOG_DIR="{{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs"
-{% endif %}
-
-# Nota: Mantive a subida para a pasta da DATA_HOJE (dia da execução do backup) 
-# "jogar na pasta do dia 29". 
-# Se preferir que vá para a pasta do dia 28, mude ${DATA_HOJE} para ${DATA_ONTEM_S3}.
-BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_HOJE}/"
-
-if [ -d "${LOG_DIR}" ]; then
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs finalizados do dia ${DATA_ONTEM} em ${LOG_DIR}..."
-    
-    # Procura estritamente por logs que tenham a DATA DE ONTEM no nome, ignorando logs abertos de hoje.
-    while IFS= read -r log_file; do
-        if [ -f "$log_file" ]; then
-            if [[ "$log_file" == *.gz ]]; then
-                ARQUIVO_FINAL="$log_file"
-            else
-                gzip -kf "$log_file" || true
-                ARQUIVO_FINAL="${log_file}.gz"
-            fi
-            
-            if [ -f "$ARQUIVO_FINAL" ]; then
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log consolidado $(basename "$ARQUIVO_FINAL") para ${BUCKET_LOGS}..."
-                aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS}" \
-                    --endpoint-url "${OCI_ENDPOINT}" \
-                    --region sa-saopaulo-1
-            fi
-        fi
-    done < <(find "${LOG_DIR}" -maxdepth 1 -type f -name "*${DATA_ONTEM}*" \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
-fi
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processamento de {{ app.id_bucket }} concluído."
 echo "---------------------------------------------------------"
-
 {% endfor %}
 {% endif %}
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Rotina consolidada finalizada com sucesso!"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Rotina de aplicações finalizada com sucesso!"

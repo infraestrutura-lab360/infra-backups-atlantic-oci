@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+
+# ==========================================
+# VARIÁVEIS GERAIS DO AMBIENTE (LOGS)
+# ==========================================
+NOME_SERVIDOR="{{ nome_servidor }}"
+DATA_ONTEM=$(date -d "yesterday" +%Y-%m-%d)
+DATA_ONTEM_S3=$(date -d "yesterday" +%Y/%m/%d)
+OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup EXCLUSIVA DE LOGS (D-1)..."
+
+{% if aplicacoes is defined %}
+{% for app in aplicacoes %}
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando logs de {{ app.id_bucket }}..."
+
+{% if app.tipo_app == 'rails' %}
+LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs"
+{% else %}
+LOG_DIR="{{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs"
+{% endif %}
+
+BUCKET_LOGS="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/logs/${DATA_ONTEM_S3}/"
+
+if [ -d "${LOG_DIR}" ]; then
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs finalizados do dia ${DATA_ONTEM} em ${LOG_DIR}..."
+    
+    while IFS= read -r log_file; do
+        if [ -f "$log_file" ]; then
+            if [[ "$log_file" == *.gz ]]; then
+                ARQUIVO_FINAL="$log_file"
+            else
+                gzip -kf "$log_file" || true
+                ARQUIVO_FINAL="${log_file}.gz"
+            fi
+            
+            if [ -f "$ARQUIVO_FINAL" ]; then
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] Enviando log consolidado $(basename "$ARQUIVO_FINAL") para ${BUCKET_LOGS}..."
+                aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS}" \
+                    --endpoint-url "${OCI_ENDPOINT}" \
+                    --region sa-saopaulo-1
+            fi
+        fi
+    done < <(find "${LOG_DIR}" -maxdepth 1 -type f -name "*${DATA_ONTEM}*" \( -name "*.gz" -o -name "*.log" -o -name "*.txt" \))
+fi
+echo "---------------------------------------------------------"
+{% endfor %}
+{% endif %}
+
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Rotina de logs finalizada com sucesso!"

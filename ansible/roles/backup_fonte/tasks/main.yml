@@ -34,7 +34,7 @@
     group: ubuntu
     mode: '0755'
 
-- name: Implantar script de backup do codigo fonte
+- name: Implantar script de backup do codigo fonte e WAR
   ansible.builtin.template:
     src: backup_fonte.sh.j2
     dest: /home/ubuntu/scripts/backup_fonte.sh
@@ -42,10 +42,26 @@
     group: ubuntu
     mode: '0755'
 
-- name: Agendar backup diario do fonte no Cron (02:00 AM)
+- name: Implantar script de backup exclusivo de logs
+  ansible.builtin.template:
+    src: backup_logs.sh.j2
+    dest: /home/ubuntu/scripts/backup_logs.sh
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Agendar backup dos LOGS no Cron (00:01 AM)
   ansible.builtin.cron:
-    name: "Backup Diario Fonte AdAlive"
+    name: "Backup Diario de Logs (OCI)"
+    user: ubuntu
+    minute: "1"
+    hour: "0"
+    job: "/home/ubuntu/scripts/backup_logs.sh >> /home/ubuntu/scripts/backup_logs.log 2>&1"
+
+- name: Agendar backup do FONTE e WAR no Cron (02:00 AM)
+  ansible.builtin.cron:
+    name: "Backup Diario do Codigo Fonte e WAR (OCI)"
+    user: ubuntu
     minute: "0"
     hour: "2"
-    user: "ubuntu"
     job: "/home/ubuntu/scripts/backup_fonte.sh >> /home/ubuntu/scripts/backup_fonte.log 2>&1"
