@@ -15,7 +15,7 @@ pipeline {
         stage('Deploy Backup Fonte e Logs (Ansible)') {
             steps {
                 script {
-                    def chaveSSH = (params.AMBIENTE == 'producao') ? 'ssh-key-prd-nov-102' : 'ssh-key-hmg-102'
+                    def chaveSSH = (params.AMBIENTE == 'producao') ? 'ssh-key-prd-nov-102' : 'ssh-key-hmg-102' : 'ssh-key-prd-nov-101'
                     
                     withCredentials([
                         sshUserPrivateKey(credentialsId: chaveSSH, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
