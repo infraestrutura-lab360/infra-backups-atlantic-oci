@@ -17,8 +17,12 @@ echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando logs de {{ app.id_bucket }}..."
 
 {% if app.tipo_app == 'rails' %}
 LOG_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs"
-# Pega o prefixo do log principal (ex: rails_server_camprev2) para não roubar o log da outra app
 LOG_PREFIX=$(echo "{{ app.log_principal }}" | cut -d'.' -f1)
+
+{% elif app.tipo_app == 'quarkus' %}
+LOG_DIR="{{ app.caminho_base | default('/u01/microservices') }}/logs"
+LOG_PREFIX=$(echo "{{ app.log_principal }}" | cut -d'.' -f1)
+
 {% else %}
 LOG_DIR="{{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs"
 LOG_PREFIX=""
@@ -30,7 +34,7 @@ if [ -d "${LOG_DIR}" ]; then
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] Verificando logs finalizados do dia ${DATA_ONTEM} em ${LOG_DIR}..."
     
     if [ -n "$LOG_PREFIX" ]; then
-        # Busca FILTRADA: Apenas logs desta app Rails específica (evita duplicar uploads)
+        # Busca FILTRADA: Apenas logs desta app Rails/Quarkus específica
         CMD_FIND="find \"${LOG_DIR}\" -maxdepth 1 -type f -name \"*${DATA_ONTEM}*\" -name \"*${LOG_PREFIX}*\" \( -name \"*.gz\" -o -name \"*.log\" -o -name \"*.txt\" \)"
     else
         # Busca PADRÃO: Pega todos os logs do Tomcat
@@ -67,18 +71,15 @@ echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando logs nativos do SO e Apache (D-
 BUCKET_SO="s3://backups/servidores/${NOME_SERVIDOR}/so/logs/${DATA_ONTEM_S3}/"
 BUCKET_APACHE="s3://backups/servidores/${NOME_SERVIDOR}/apache/logs/${DATA_ONTEM_S3}/"
 
-# Função para capturar o log ".1" fechado, formatar com a data e enviar
 enviar_log_padrao_ubuntu() {
     local arquivo_origem="$1"
     local bucket_destino="$2"
     
-    # Só processa se o arquivo do dia anterior (.1) existir
     if [ -f "${arquivo_origem}" ]; then
         local nome_base=$(basename "${arquivo_origem}" .1)
         local arquivo_final="/tmp/${nome_base}.${DATA_ONTEM}.gz"
         
         echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando e enviando ${nome_base} consolidado..."
-        # O gzip -c compacta jogando para a pasta /tmp, sem alterar o arquivo original do sistema
         gzip -c "${arquivo_origem}" > "${arquivo_final}"
         
         aws s3 cp "${arquivo_final}" "${bucket_destino}" \
@@ -89,14 +90,11 @@ enviar_log_padrao_ubuntu() {
     fi
 }
 
-# 1. Processa logs do SO
 enviar_log_padrao_ubuntu "/var/log/auth.log.1" "${BUCKET_SO}"
 enviar_log_padrao_ubuntu "/var/log/syslog.1" "${BUCKET_SO}"
 
-# 2. Processa logs do Apache (varre todos os arquivos .1 da pasta)
 if [ -d "/var/log/apache2" ]; then
     for apache_log in /var/log/apache2/*.1; do
-        # Verifica se o loop encontrou arquivos de fato (evita falhas se o diretório estiver vazio)
         if [ -f "${apache_log}" ]; then
             enviar_log_padrao_ubuntu "${apache_log}" "${BUCKET_APACHE}"
         fi
