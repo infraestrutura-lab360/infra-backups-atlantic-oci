@@ -56,7 +56,7 @@ find "${LOCAL_BACKUP_DIR}" -type f -name "${WAR_FILE}.*.tar.gz" ! -name "${NOME_
 
 {% elif app.tipo_backup == 'jar' %}
 LOCAL_BACKUP_DIR="{{ app.caminho_backup_local }}"
-BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/jar/${DATA_HOJE}/"
+BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/fonte/${DATA_HOJE}/"
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando backup local de Microsserviços JAR..."
 # Varre a pasta de backup gerada pelo seu script de deploy local (ex: convenio-medico-service.jar-2026-08-30...)

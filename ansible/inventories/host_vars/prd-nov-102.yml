@@ -54,7 +54,7 @@ aplicacoes:
 
   # Micros serviços Java Quarkus
 
-  - id_bucket: "convenio-medico-quarkus"
+  - id_bucket: "ms-convenio-medico"
     caminho_base: "/u01/microservices"
     nome_pasta: "" # Deixe vazio pois o caminho_base já aponta direto
     tipo_app: "quarkus"

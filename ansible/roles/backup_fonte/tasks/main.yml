@@ -1,15 +1,5 @@
 ---
 # ==========================================
-# LIMPEZA DO AMBIENTE (REMOVER FLUENT BIT)
-# ==========================================
-- name: Parar, desabilitar e remover o Fluent Bit completamente
-  ansible.builtin.apt:
-    name: fluent-bit
-    state: absent
-    purge: yes
-  ignore_errors: yes # Ignora erro caso ele já tenha sido removido
-
-# ==========================================
 # PREPARAÇÃO DE LOGS (LOGROTATE E PASTAS)
 # ==========================================
 - name: Garantir que o diretorio de logs do Rails existe
@@ -29,6 +19,7 @@
     content: |
       {% set ns = namespace(rails_rotacionado=false) %}
       {% for app in aplicacoes %}
+      
       {% if app.tipo_app == 'rails' %}
       {% if not ns.rails_rotacionado %}
       {{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}/Logs/*.log {
@@ -45,6 +36,7 @@
       }
       {% set ns.rails_rotacionado = true %}
       {% endif %}
+      
       {% elif app.tipo_app == 'tomcat' %}
       {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/catalina.out
       {{ app.caminho_base | default('/home/ubuntu') }}/{{ app.nome_pasta }}/logs/*.log
@@ -60,9 +52,30 @@
           dateyesterday
           dateformat .%Y-%m-%d
       }
+      
+      {% elif app.tipo_app == 'quarkus' %}
+      {{ app.caminho_base | default('/u01/microservices') }}/{{ app.log_principal }} {
+          daily
+          rotate 3
+          copytruncate
+          missingok
+          dateext
+          dateyesterday
+          dateformat .%Y-%m-%d
+          compress
+          notifempty
+          olddir {{ app.caminho_base | default('/u01/microservices') }}/logs
+      }
       {% endif %}
+      
       {% endfor %}
   when: aplicacoes is defined
+
+# Opcional, mas muito recomendado: Remover o logrotate legado que você identificou
+- name: Remover regra legada de logrotate do Quarkus (se existir)
+  ansible.builtin.file:
+    path: /etc/logrotate.d/ms-convenio-medico-service
+    state: absent
 
 # ==========================================
 # DEPENDÊNCIAS E CREDENCIAIS DE BACKUP
