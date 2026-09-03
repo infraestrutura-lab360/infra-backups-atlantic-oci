@@ -54,7 +54,7 @@
       }
       
       {% elif app.tipo_app == 'quarkus' %}
-      {{ app.caminho_base | default('/u01/microservices') }}/{{ app.log_principal }} {
+      {{ app.caminho_base | default('/u01/microservices') }}/logs/{{ app.log_principal }} {
           daily
           rotate 3
           copytruncate
@@ -64,7 +64,6 @@
           dateformat .%Y-%m-%d
           compress
           notifempty
-          olddir {{ app.caminho_base | default('/u01/microservices') }}/logs
       }
       {% endif %}
       
