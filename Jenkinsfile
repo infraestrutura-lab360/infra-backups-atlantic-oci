@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ALVO', choices: ['homologacao', 'prd-nov-101', 'prd-nov-102'], description: 'Escolha o ambiente ou servidor alvo para o deploy')
+        choice(name: 'ALVO', choices: ['homologacao', 'prd-nov-101', 'prd-nov-102', 'prd-nov-103' ], description: 'Escolha o ambiente ou servidor alvo para o deploy')
     }
 
     stages {
@@ -24,6 +24,9 @@ pipeline {
                             break
                         case 'prd-nov-102':
                             chaveSSH = 'ssh-key-prd-nov-102'
+                            break
+                        case 'prd-nov-103':
+                            chaveSSH = 'ssh-key-prd-nov-103'
                             break
                         case 'homologacao':
                             chaveSSH = 'ssh-key-hmg-102'
