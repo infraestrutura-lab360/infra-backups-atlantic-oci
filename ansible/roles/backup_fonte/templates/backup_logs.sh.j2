@@ -55,6 +55,9 @@ if [ -d "${LOG_DIR}" ]; then
                 aws s3 cp "$ARQUIVO_FINAL" "${BUCKET_LOGS}" \
                     --endpoint-url "${OCI_ENDPOINT}" \
                     --region sa-saopaulo-1
+                # ADICIONADO: Limpa o arquivo compactado local após o sucesso do upload
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando artefato local $(basename "$ARQUIVO_FINAL") para liberar disco..."
+                rm -f "$ARQUIVO_FINAL"
             fi
         fi
     done < <(eval "$CMD_FIND")
