@@ -34,10 +34,52 @@ aplicacoes:
     tipo_app: "tomcat"
     
 
-  # Micros serviços Java Quarkus
+  # Micros serviços Java Quarkus para logs
 
-  - id_bucket: "ms-convenio-medico"
+  - id_bucket: "ms-camprev-novaprev-notificacoes"
     caminho_base: "/u01/microservices"
     nome_pasta: "" # Deixe vazio pois o caminho_base já aponta direto
     tipo_app: "quarkus"
+    log_principal: "camprev-novaprev-ms-notificacoes-service.log" 
+
+  - id_bucket: "ms-folha-notificacoes"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "folha-notificacoes-service.log"
+
+  - id_bucket: "ms-busca-cep"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "ms-busca-cep-service.log"
+
+  - id_bucket: "ms-convenio-medico"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
     log_principal: "ms-convenio-medico-service.log"
+
+  - id_bucket: "ms-folhapar-ged"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "ms-folhapar-ged-service.log"
+  
+  - id_bucket: "ms-motor-prova-vida"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "ms-motor-prova-vida-service.log"
+
+  - id_bucket: "ms-novaprev-ged"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "ms-novaprev-ged-service.log"
+
+#  - id_bucket: "atlhub"
+#    caminho_base: "/u01/microservices"
+#    nome_pasta: "" 
+#    tipo_app: "quarkus"
+#    log_principal: "nohup-atlhub.log"
