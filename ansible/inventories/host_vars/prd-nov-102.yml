@@ -22,35 +22,17 @@ aplicacoes:
     caminho_base: "/home/ubuntu"                                      # <--- Caminho base real
     nome_pasta: "apache-tomcat-9.0.21-prd-novaprev"                   # Ajuste para a pasta real do servidor, se necessário
     tipo_app: "tomcat"
-    tipo_backup: "war"
-    arquivos_war:                                                     # Lista dos arquivos WAR para compactar
-      - "novaprev.war"
-      - "novaprev2.war"
-      - "autoatendimento.war"
-      - "autoatendimento-votacao.war"
-      - "esocial-camprev.war"
-      - "esocial-servicos-camprev.war"
-      - "previdencia-api.war"
 
   - id_bucket: "camprev-novaprev-debug"
     caminho_base: "/home/ubuntu"
     nome_pasta: "apache-tomcat-9.0.21-prd-novaprev-debug"
     tipo_app: "tomcat"
-    tipo_backup: "war"
-    arquivos_war:
-      - "esocial-camprev.war"
-
+    
   - id_bucket: "camprev-folha"
     caminho_base: "/home/ubuntu"
     nome_pasta: "apache-tomcat-9.0.21-prd-folha"
     tipo_app: "tomcat"
-    tipo_backup: "war"
-    arquivos_war:
-      - "folha-autoatendimento-par.war"
-      - "folhapar.war"
-      - "recadastramento-api.war"
-      - "rh-api.war"
-
+    
 
   # Micros serviços Java Quarkus
 
@@ -58,7 +40,4 @@ aplicacoes:
     caminho_base: "/u01/microservices"
     nome_pasta: "" # Deixe vazio pois o caminho_base já aponta direto
     tipo_app: "quarkus"
-    tipo_backup: "jar"
     log_principal: "ms-convenio-medico-service.log"
-    # Onde os seus scripts locais estão salvando os backups:
-    caminho_backup_local: "/u01/deployments/backups/microservices"

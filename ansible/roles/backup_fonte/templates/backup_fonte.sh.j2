@@ -2,20 +2,20 @@
 set -e
 
 # ==========================================
-# VARIÁVEIS GERAIS DO AMBIENTE (FONTE/WAR/JAR)
+# VARIÁVEIS GERAIS DO AMBIENTE (FONTE)
 # ==========================================
 NOME_SERVIDOR="{{ nome_servidor }}"
 DATA_HOJE=$(date +%Y/%m/%d)
 DATA_ARQUIVO=$(date +%Y-%m-%d)
 OCI_ENDPOINT="https://gr7swnp1wj0e.compat.objectstorage.sa-saopaulo-1.oraclecloud.com"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup EXCLUSIVA DE ARTEFATOS..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Iniciando rotina de backup EXCLUSIVA DE FONTE..."
 
 {% if aplicacoes is defined %}
 {% for app in aplicacoes %}
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando aplicação: {{ app.id_bucket }}..."
 
-{% if app.tipo_backup == 'fonte' %}
+{% if app.tipo_backup is defined and app.tipo_backup == 'fonte' %}
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando aplicação: {{ app.id_bucket }}..."
 APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu/AdAlive-Apps') }}"
 APP_FOLDER="{{ app.nome_pasta }}"
 LOCAL_BACKUP_DIR="${APP_BASE_DIR}"
@@ -31,53 +31,9 @@ aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups antigos..."
 find "${LOCAL_BACKUP_DIR}" -type f -name "{{ app.nome_pasta }}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
-
-{% elif app.tipo_backup == 'war' %}
-APP_BASE_DIR="{{ app.caminho_base | default('/home/ubuntu') }}"
-APP_FOLDER="{{ app.nome_pasta }}"
-LOCAL_BACKUP_DIR="${APP_BASE_DIR}/${APP_FOLDER}/backups"
-mkdir -p "${LOCAL_BACKUP_DIR}"
-
-{% for war in app.arquivos_war %}
-WAR_FILE="{{ war }}"
-NOME_ARQUIVO="${WAR_FILE}.${DATA_ARQUIVO}.tar.gz"
-CAMINHO_BACKUP="${LOCAL_BACKUP_DIR}/${NOME_ARQUIVO}"
-BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/war/${DATA_HOJE}/${NOME_ARQUIVO}"
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando WAR (${WAR_FILE})..."
-tar -czf "${CAMINHO_BACKUP}" -C "${APP_BASE_DIR}/${APP_FOLDER}/webapps" "${WAR_FILE}"
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
-aws s3 cp "${CAMINHO_BACKUP}" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT}" --region sa-saopaulo-1
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Limpando backups antigos de ${WAR_FILE}..."
-find "${LOCAL_BACKUP_DIR}" -type f -name "${WAR_FILE}.*.tar.gz" ! -name "${NOME_ARQUIVO}" -delete
-{% endfor %}
-
-{% elif app.tipo_backup == 'jar' %}
-LOCAL_BACKUP_DIR="{{ app.caminho_backup_local }}"
-BUCKET_DESTINO="s3://backups/aplicacoes/${NOME_SERVIDOR}/{{ app.id_bucket }}/fonte/${DATA_HOJE}/"
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Processando backup local de Microsserviços JAR..."
-# Varre a pasta de backup gerada pelo seu script de deploy local (ex: convenio-medico-service.jar-2026-08-30...)
-for JAR_FILE in "${LOCAL_BACKUP_DIR}"/*.jar-*; do
-    if [ -f "$JAR_FILE" ]; then
-        ARQUIVO_NOME=$(basename "$JAR_FILE")
-        # Compacta o .jar para economizar rede/storage da OCI
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Compactando $ARQUIVO_NOME..."
-        tar -czf "${LOCAL_BACKUP_DIR}/${ARQUIVO_NOME}.tar.gz" -C "${LOCAL_BACKUP_DIR}" "${ARQUIVO_NOME}"
-        
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] Realizando upload para ${BUCKET_DESTINO}..."
-        aws s3 cp "${LOCAL_BACKUP_DIR}/${ARQUIVO_NOME}.tar.gz" "${BUCKET_DESTINO}" --endpoint-url "${OCI_ENDPOINT}" --region sa-saopaulo-1
-        
-        # Limpa o arquivo JAR bruto e deixa o tar.gz recente (Retenção D-0)
-        rm -f "$JAR_FILE"
-        find "${LOCAL_BACKUP_DIR}" -type f -name "*.tar.gz" -mtime +1 -delete
-    fi
-done
-
-{% endif %}
 echo "---------------------------------------------------------"
+{% endif %}
+
 {% endfor %}
 {% endif %}
 
