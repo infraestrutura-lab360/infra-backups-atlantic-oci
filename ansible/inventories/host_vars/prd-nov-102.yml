@@ -78,8 +78,8 @@ aplicacoes:
     tipo_app: "quarkus"
     log_principal: "ms-novaprev-ged-service.log"
 
-#  - id_bucket: "atlhub"
-#    caminho_base: "/u01/microservices"
-#    nome_pasta: "" 
-#    tipo_app: "quarkus"
-#    log_principal: "nohup-atlhub.log"
+  - id_bucket: "atlhub"
+    caminho_base: "/u01/microservices"
+    nome_pasta: "" 
+    tipo_app: "quarkus"
+    log_principal: "nohup-atlhub.log"
