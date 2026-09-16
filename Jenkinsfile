@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ALVO', choices: ['homologacao', 'prd-nov-101', 'prd-nov-102', 'prd-nov-103 (Ajustar CRON Manualmente Logs:20 17 e Fonte: 0 17)' ], description: 'Escolha o ambiente ou servidor alvo para o deploy')
+        choice(name: 'ALVO', choices: ['homologacao', 'prd-nov-101', 'prd-nov-102', 'prd-nov-103 (Ajustar CRON Manualmente)' ], description: 'Escolha o ambiente ou servidor alvo para o deploy')
     }
 
     stages {
