@@ -25,7 +25,7 @@ pipeline {
                         case 'prd-nov-102':
                             chaveSSH = 'ssh-key-prd-nov-102'
                             break
-                        case 'prd-nov-103':
+                        case 'prd-nov-103 (Ajustar CRON Manualmente)':
                             chaveSSH = 'ssh-key-prd-nov-103'
                             break
                         case 'homologacao':
